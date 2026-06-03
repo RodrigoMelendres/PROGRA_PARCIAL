@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat en Vivo UDABOL</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+
+<body>
+
+    <div class="contenedor">
+
+        <!-- ENCABEZADO -->
+        <h1> CHAT EN VIVO UDABOL 💬</h1>
+
+        <div class="subtitulo">
+            Universidad de Aquino Bolivia - Comunicación en Tiempo Real
+        </div>
+
+        <!-- NOMBRE DEL USUARIO -->
+        <div class="usuario">
+
+            <input
+                type="text"
+                id="nombre"
+                placeholder=" Ingrese su nombre">
+
+            <button onclick="guardarNombre()">
+                 Ingresar al Chat
+            </button>
+
+        </div>
+
+        <!-- CHAT -->
+        <div id="chat"></div>
+
+        <!-- MENSAJES -->
+        <div class="mensaje">
+
+            <input
+                type="text"
+                id="mensaje"
+                placeholder=" Escriba su mensaje aquí...">
+
+            <button onclick="enviarMensaje()">
+                📨 Enviar Mensaje
+            </button>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        const socket = io();
+
+        let nombreUsuario = "";
+
+        // GUARDAR NOMBRE
+        function guardarNombre(){
+
+            const nombre = document.getElementById("nombre");
+
+            if(nombre.value.trim() === ""){
+                alert("Debe ingresar un nombre.");
+                return;
+            }
+
+            nombreUsuario = nombre.value;
+
+            nombre.disabled = true;
+
+            const chat = document.getElementById("chat");
+
+            chat.innerHTML += `
+                <p>
+                     <strong>${nombreUsuario}</strong> se ha unido al chat.
+                </p>
+            `;
+        }
+
+        // ENVIAR MENSAJE
+        function enviarMensaje(){
+
+            const mensaje = document.getElementById("mensaje");
+
+            if(nombreUsuario === ""){
+                alert("Primero debe ingresar su nombre.");
+                return;
+            }
+
+            if(mensaje.value.trim() === ""){
+                return;
+            }
+
+            socket.send(
+                nombreUsuario + ": " + mensaje.value
+            );
+
+            mensaje.value = "";
+        }
+
+        // RECIBIR MENSAJES
+        socket.on("message", function(msg){
+
+            const chat = document.getElementById("chat");
+
+            chat.innerHTML += `
+                <p>${msg}</p>
+            `;
+
+            chat.scrollTop = chat.scrollHeight;
+        });
+
+        // ENVIAR CON ENTER
+        document.addEventListener("DOMContentLoaded", function(){
+
+            document.getElementById("mensaje")
+            .addEventListener("keypress", function(e){
+
+                if(e.key === "Enter"){
+                    enviarMensaje();
+                }
+
+            });
+
+        });
+
+    </script>
+
+</body>
+</html>
