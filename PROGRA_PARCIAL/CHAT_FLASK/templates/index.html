@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat en Vivo UDABOL</title>
+    <title>Chat en Línea UDABOL</title>
 
     <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -18,24 +18,16 @@
     <div class="contenedor">
 
         <!-- ENCABEZADO -->
-        <h1> CHAT EN VIVO UDABOL 💬</h1>
+        <h1>💬 CHAT EN LÍNEA <span class="resaltado">UDABOL</span></h1>
 
         <div class="subtitulo">
             Universidad de Aquino Bolivia - Comunicación en Tiempo Real
         </div>
 
         <!-- NOMBRE DEL USUARIO -->
-        <div class="usuario">
-
-            <input
-                type="text"
-                id="nombre"
-                placeholder=" Ingrese su nombre">
-
-            <button onclick="guardarNombre()">
-                 Ingresar al Chat
-            </button>
-
+        <div class="usuario" id="seccion-usuario">
+            <input type="text" id="nombre" placeholder="Ingrese su nombre completo..." autocomplete="off">
+            <button onclick="guardarNombre()">Ingresar al Chat</button>
         </div>
 
         <!-- CHAT -->
@@ -43,96 +35,104 @@
 
         <!-- MENSAJES -->
         <div class="mensaje">
-
-            <input
-                type="text"
-                id="mensaje"
-                placeholder=" Escriba su mensaje aquí...">
-
-            <button onclick="enviarMensaje()">
-                📨 Enviar Mensaje
+            <input type="text" id="mensaje" placeholder="Escriba su mensaje aquí..." disabled autocomplete="off">
+            <button id="btn-enviar" onclick="enviarMensaje()" disabled>
+                Enviar Mensaje
             </button>
-
         </div>
 
     </div>
 
     <script>
-
         const socket = io();
-
         let nombreUsuario = "";
 
         // GUARDAR NOMBRE
-        function guardarNombre(){
+        function guardarNombre() {
+            const nombreInput = document.getElementById("nombre");
+            const nombre = nombreInput.value.trim();
 
-            const nombre = document.getElementById("nombre");
-
-            if(nombre.value.trim() === ""){
-                alert("Debe ingresar un nombre.");
+            if (nombre === "") {
+                alert("Debe ingresar un nombre válido.");
                 return;
             }
 
-            nombreUsuario = nombre.value;
+            nombreUsuario = nombre;
 
-            nombre.disabled = true;
+            // Ocultar la sección del nombre y habilitar la de mensajes
+            document.getElementById("seccion-usuario").style.display = "none";
+            document.getElementById("mensaje").disabled = false;
+            document.getElementById("btn-enviar").disabled = false;
+            document.getElementById("mensaje").focus();
 
-            const chat = document.getElementById("chat");
-
-            chat.innerHTML += `
-                <p>
-                     <strong>${nombreUsuario}</strong> se ha unido al chat.
-                </p>
-            `;
+            agregarMensajeSistema(`👋 ${nombreUsuario} se ha unido al chat.`);
         }
 
         // ENVIAR MENSAJE
-        function enviarMensaje(){
+        function enviarMensaje() {
+            const mensajeInput = document.getElementById("mensaje");
+            const texto = mensajeInput.value.trim();
 
-            const mensaje = document.getElementById("mensaje");
-
-            if(nombreUsuario === ""){
+            if (nombreUsuario === "") {
                 alert("Primero debe ingresar su nombre.");
                 return;
             }
 
-            if(mensaje.value.trim() === ""){
-                return;
-            }
+            if (texto === "") return;
 
-            socket.send(
-                nombreUsuario + ": " + mensaje.value
-            );
-
-            mensaje.value = "";
+            // Enviar mensaje al servidor a través de WebSockets
+            socket.send(nombreUsuario + ": " + texto);
+            mensajeInput.value = "";
+            mensajeInput.focus();
         }
 
         // RECIBIR MENSAJES
-        socket.on("message", function(msg){
-
+        socket.on("message", function(msg) {
             const chat = document.getElementById("chat");
+            const parrafo = document.createElement("p");
+            
+            // Formatear para que el nombre del autor se vea en negrita
+            const separador = msg.indexOf(":");
+            if (separador !== -1) {
+                const autor = msg.substring(0, separador);
+                const contenido = msg.substring(separador + 1);
+                parrafo.innerHTML = `<strong>${autor}:</strong>${contenido}`;
+            } else {
+                parrafo.textContent = msg;
+            }
 
-            chat.innerHTML += `
-                <p>${msg}</p>
-            `;
-
-            chat.scrollTop = chat.scrollHeight;
+            chat.appendChild(parrafo);
+            chat.scrollTop = chat.scrollHeight; // Hacer scroll automáticamente hacia el último mensaje
         });
 
-        // ENVIAR CON ENTER
-        document.addEventListener("DOMContentLoaded", function(){
+        // MENSAJE DE SISTEMA (Visualmente distinto)
+        function agregarMensajeSistema(texto) {
+            const chat = document.getElementById("chat");
+            const parrafo = document.createElement("p");
+            
+            // Estilos en línea para diferenciar los mensajes del sistema de los mensajes de usuarios
+            parrafo.style.background = "#e2e8f0";
+            parrafo.style.border = "none";
+            parrafo.style.alignSelf = "center";
+            parrafo.style.fontSize = "13px";
+            parrafo.style.color = "#475569";
+            parrafo.innerHTML = `<em>${texto}</em>`;
+            
+            chat.appendChild(parrafo);
+        }
 
-            document.getElementById("mensaje")
-            .addEventListener("keypress", function(e){
-
-                if(e.key === "Enter"){
-                    enviarMensaje();
-                }
-
+        // PERMITIR ENVÍO DE FORMULARIOS CON LA TECLA "ENTER"
+        document.addEventListener("DOMContentLoaded", function() {
+            // Enter para enviar mensaje
+            document.getElementById("mensaje").addEventListener("keypress", function(e) {
+                if (e.key === "Enter") enviarMensaje();
             });
 
+            // Enter para guardar nombre
+            document.getElementById("nombre").addEventListener("keypress", function(e) {
+                if (e.key === "Enter") guardarNombre();
+            });
         });
-
     </script>
 
 </body>
