@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template
 from flask_socketio import SocketIO
 import requests
 
@@ -6,7 +6,6 @@ app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 TOKEN = "8855798797:AAGCYmIcdYH_8JN75o_fShlU23E5cyydo50"
-# EJEMPLO: MI_CHAT_ID = "123456789"
 MI_CHAT_ID = "7233717619" 
 
 @app.route("/")
@@ -15,10 +14,8 @@ def inicio():
 
 @socketio.on("message")
 def manejar_mensaje(mensaje):
-    # Esto muestra el mensaje en tu chat web
     socketio.send(mensaje, broadcast=True)
-    
-    # Esto envía el mensaje a tu Telegram
+    # Enviamos el mensaje tal cual a tu Telegram
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     requests.post(url, json={"chat_id": MI_CHAT_ID, "text": mensaje})
 
