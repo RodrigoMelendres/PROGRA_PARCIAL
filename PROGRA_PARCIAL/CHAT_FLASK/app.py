@@ -8,7 +8,7 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 TOKEN = "8855798797:AAGCYmIcdYH_8JN75o_fShlU23E5cyydo50"
 # IMPORTANTE: Pon aquí el ID de tu propio chat con el bot
 # Para obtenerlo: inicia tu bot, ve a https://api.telegram.org/botTU_TOKEN/getUpdates
-MI_CHAT_ID = "TU_ID_AQUI" 
+MI_CHAT_ID = "7233717619" 
 
 @app.route("/")
 def inicio():
