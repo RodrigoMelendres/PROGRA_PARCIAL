@@ -5,13 +5,10 @@ import requests
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Configuración de tu Bot
 TOKEN = "8855798797:AAGCYmIcdYH_8JN75o_fShlU23E5cyydo50"
-CHAT_ID = "7233717619" # Debes poner aquí tu ID personal para que el bot te responda
-
-def enviar_a_telegram(texto):
-    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    requests.post(url, data={"chat_id": CHAT_ID, "text": texto, "parse_mode": "HTML"})
+# IMPORTANTE: Pon aquí el ID de tu propio chat con el bot
+# Para obtenerlo: inicia tu bot, ve a https://api.telegram.org/botTU_TOKEN/getUpdates
+MI_CHAT_ID = "TU_ID_AQUI" 
 
 @app.route("/")
 def inicio():
@@ -19,15 +16,14 @@ def inicio():
 
 @socketio.on("message")
 def manejar_mensaje(mensaje):
-    # Enviar al chat web
+    # 1. Mostrar en el chat web
     socketio.send(mensaje, broadcast=True)
     
-    # Si el usuario escribió un comando en el chat web
+    # 2. Enviar a Telegram vía API
     if ":" in mensaje:
-        comando = mensaje.split(":")[1].strip().lower()
-        if comando.startswith("/"):
-            # Enviamos el comando a Telegram para que el bot lo procese
-            enviar_a_telegram(f"Comando recibido desde Web: {comando}")
+        texto = mensaje.split(":")[1].strip()
+        url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+        requests.post(url, json={"chat_id": MI_CHAT_ID, "text": texto})
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000)
