@@ -1,68 +1,53 @@
 from telegram import (
     Update,
-    ReplyKeyboardMarkup,
-    KeyboardButton,
-    InputMediaPhoto
+    InlineKeyboardButton,
+    InlineKeyboardMarkup
 )
 
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
-    MessageHandler,
-    filters,
+    CallbackQueryHandler,
     ContextTypes
 )
 
-# =====================================
-# TOKEN DEL BOT
-# =====================================
 TOKEN = "8855798797:AAGCYmIcdYH_8JN75o_fShlU23E5cyydo50"
-
-# =====================================
-# BASE DE DATOS TEMPORAL
-# =====================================
-carritos = {}
-valoraciones = []
 
 # =====================================
 # MENU PRINCIPAL
 # =====================================
-MENU = [
-    [KeyboardButton("💻 Laptops"), KeyboardButton("🖥️ PC Gamer")],
-    [KeyboardButton("🎧 Accesorios"), KeyboardButton("🔥 Ofertas")],
-    [KeyboardButton("🛒 Carrito"), KeyboardButton("🖼️ Galería")],
-    [KeyboardButton("📄 Catálogo"), KeyboardButton("⭐ Valorar")],
-    [KeyboardButton("📍 Ubicación"), KeyboardButton("☎️ Contacto")],
-    [KeyboardButton("🕒 Horarios")]
-]
+def menu_principal():
+
+    keyboard = [
+        [InlineKeyboardButton("💻 Laptops", callback_data="laptops")],
+        [InlineKeyboardButton("🖥️ PC Gamer", callback_data="gamer")],
+        [InlineKeyboardButton("🎧 Accesorios", callback_data="accesorios")],
+        [InlineKeyboardButton("🔥 Ofertas", callback_data="ofertas")],
+        [InlineKeyboardButton("📄 Catálogo PDF", callback_data="catalogo")],
+        [InlineKeyboardButton("🖼️ Galería", callback_data="galeria")],
+        [InlineKeyboardButton("⭐ Valoraciones", callback_data="valoraciones")],
+        [InlineKeyboardButton("📍 Ubicación", callback_data="ubicacion")],
+        [InlineKeyboardButton("☎️ Contacto", callback_data="contacto")]
+    ]
+
+    return InlineKeyboardMarkup(keyboard)
 
 # =====================================
 # START
 # =====================================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    teclado = ReplyKeyboardMarkup(
-        MENU,
-        resize_keyboard=True
-    )
-
     mensaje = """
-🛒 TECHSTORE BOLIVIA
+🛒 TECHSTORE BOLIVIA 2026
 
 Bienvenido a nuestra tienda tecnológica.
-
-💻 Laptops
-🖥️ PC Gamer
-🎧 Accesorios
-🔥 Ofertas
-📄 Catálogo PDF
 
 Seleccione una opción:
 """
 
     await update.message.reply_text(
         mensaje,
-        reply_markup=teclado
+        reply_markup=menu_principal()
     )
 
 # =====================================
@@ -70,20 +55,18 @@ Seleccione una opción:
 # =====================================
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    texto = """
-📋 COMANDOS DISPONIBLES
+    await update.message.reply_text(
+        """
+📋 COMANDOS
 
-/start      → Menú principal
-/help       → Ayuda
-/catalogo   → Descargar catálogo PDF
-
-También puedes usar los botones.
+/start
+/help
+/catalogo
 """
-
-    await update.message.reply_text(texto)
+    )
 
 # =====================================
-# CATALOGO PDF
+# CATALOGO
 # =====================================
 async def catalogo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -93,287 +76,142 @@ async def catalogo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await update.message.reply_document(
                 document=pdf,
-                filename="Catalogo_TechStore_2026.pdf",
-                caption="""
-📄 CATÁLOGO OFICIAL TECHSTORE
-
-✅ Laptops
-✅ PC Gamer
-✅ Accesorios
-✅ Ofertas
-
-Gracias por visitarnos.
-"""
+                caption="📄 Catálogo Oficial TechStore Bolivia"
             )
 
-    except FileNotFoundError:
+    except:
 
         await update.message.reply_text(
             "❌ No se encontró el archivo catalogo_techstore.pdf"
         )
 
 # =====================================
-# MENSAJES
+# BOTONES
 # =====================================
-async def mensajes(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def botones(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    texto = update.message.text
-    user_id = update.effective_user.id
+    query = update.callback_query
 
-    # ==========================
-    # VALORACIONES
-    # ==========================
-    if context.user_data.get("esperando_valoracion"):
+    await query.answer()
 
-        try:
+    opcion = query.data
 
-            nota = int(texto)
+    if opcion == "laptops":
 
-            if 1 <= nota <= 5:
-
-                valoraciones.append(nota)
-
-                promedio = sum(valoraciones) / len(valoraciones)
-
-                await update.message.reply_text(
-                    f"""
-⭐ Gracias por tu valoración
-
-Tu calificación: {nota}/5
-
-Promedio actual:
-⭐ {promedio:.1f}/5
-"""
-                )
-
-                context.user_data["esperando_valoracion"] = False
-                return
-
-        except:
-            pass
-
-        await update.message.reply_text(
-            "Ingrese una nota válida del 1 al 5."
-        )
-        return
-
-    # ==========================
-    # LAPTOPS
-    # ==========================
-    if texto == "💻 Laptops":
-
-        if user_id not in carritos:
-            carritos[user_id] = []
-
-        carritos[user_id].append("Lenovo IdeaPad 5")
-
-        await update.message.reply_photo(
-            photo="https://images.unsplash.com/photo-1496181133206-80ce9b88a853",
+        await query.message.reply_photo(
+            photo="https://picsum.photos/800/500",
             caption="""
 💻 LAPTOPS DISPONIBLES
 
-• Lenovo IdeaPad 5
-• ASUS TUF Gaming
-• HP Pavilion
+✔ Lenovo IdeaPad 5
+✔ ASUS TUF Gaming
+✔ HP Pavilion
 
 💰 Desde Bs. 4.500
-
-✅ Agregado al carrito.
 """
         )
 
-    # ==========================
-    # PC GAMER
-    # ==========================
-    elif texto == "🖥️ PC Gamer":
+    elif opcion == "gamer":
 
-        if user_id not in carritos:
-            carritos[user_id] = []
-
-        carritos[user_id].append("PC Gamer Ryzen 7")
-
-        await update.message.reply_photo(
-            photo="https://images.unsplash.com/photo-1587202372775-e229f172b9d7",
+        await query.message.reply_photo(
+            photo="https://picsum.photos/801/500",
             caption="""
 🖥️ PC GAMER
 
 🔥 Ryzen 7
 🔥 RTX 4060
-🔥 32 GB RAM
-🔥 SSD 1 TB
+🔥 SSD 1TB
 
 💰 Bs. 9.999
-
-✅ Agregado al carrito.
 """
         )
 
-    # ==========================
-    # ACCESORIOS
-    # ==========================
-    elif texto == "🎧 Accesorios":
+    elif opcion == "accesorios":
 
-        await update.message.reply_text(
+        await query.message.reply_text(
             """
 🎧 ACCESORIOS
 
-⌨️ Teclados Mecánicos
+⌨️ Teclados
 🖱️ Mouse Gamer
-🎧 Headsets RGB
+🎧 Headsets
 🖥️ Monitores
-
-Disponibles en stock.
 """
         )
 
-    # ==========================
-    # OFERTAS
-    # ==========================
-    elif texto == "🔥 Ofertas":
+    elif opcion == "ofertas":
 
-        await update.message.reply_text(
+        await query.message.reply_text(
             """
-🔥 OFERTA DE LA SEMANA
+🔥 OFERTAS DEL MES
 
-💻 Lenovo IdeaPad 5
+💻 Lenovo IdeaPad
 
 Antes: Bs. 4.500
 Ahora: Bs. 3.999
-
-⏳ Oferta limitada.
 """
         )
 
-    # ==========================
-    # CARRITO
-    # ==========================
-    elif texto == "🛒 Carrito":
+    elif opcion == "catalogo":
 
-        if user_id not in carritos or len(carritos[user_id]) == 0:
+        try:
 
-            await update.message.reply_text(
-                "🛒 Tu carrito está vacío."
+            with open("catalogo_techstore.pdf", "rb") as pdf:
+
+                await query.message.reply_document(
+                    document=pdf,
+                    caption="📄 Catálogo Oficial"
+                )
+
+        except:
+
+            await query.message.reply_text(
+                "❌ Catálogo no encontrado."
             )
 
-        else:
+    elif opcion == "galeria":
 
-            mensaje = "🛒 TU CARRITO\n\n"
-
-            for producto in carritos[user_id]:
-                mensaje += f"• {producto}\n"
-
-            mensaje += "\n✅ Gracias por visitar TechStore."
-
-            await update.message.reply_text(mensaje)
-
-    # ==========================
-    # GALERIA
-    # ==========================
-    elif texto == "🖼️ Galería":
-
-        media = [
-
-            InputMediaPhoto(
-                media="https://images.unsplash.com/photo-1496181133206-80ce9b88a853",
-                caption="💻 Laptop Lenovo"
-            ),
-
-            InputMediaPhoto(
-                media="https://images.unsplash.com/photo-1593642702821-c8da6771f0c6"
-            ),
-
-            InputMediaPhoto(
-                media="https://images.unsplash.com/photo-1517336714739-489689fd1ca8"
-            ),
-
-            InputMediaPhoto(
-                media="https://images.unsplash.com/photo-1587202372775-e229f172b9d7"
-            )
-        ]
-
-        await update.message.reply_media_group(media)
-
-    # ==========================
-    # CATALOGO
-    # ==========================
-    elif texto == "📄 Catálogo":
-
-        await catalogo(update, context)
-
-    # ==========================
-    # VALORAR
-    # ==========================
-    elif texto == "⭐ Valorar":
-
-        context.user_data["esperando_valoracion"] = True
-
-        await update.message.reply_text(
+        await query.message.reply_text(
             """
-⭐ CALIFÍCANOS
+🖼️ GALERÍA
 
-Escribe una nota del 1 al 5.
-
-Ejemplo:
-5
+Aquí puedes mostrar tus productos.
+Agrega varias imágenes usando reply_media_group().
 """
         )
 
-    # ==========================
-    # UBICACION
-    # ==========================
-    elif texto == "📍 Ubicación":
+    elif opcion == "valoraciones":
 
-        await update.message.reply_venue(
+        await query.message.reply_text(
+            """
+⭐ VALORACIÓN GENERAL
+
+4.8 / 5 ⭐
+
+Basado en 250 clientes.
+"""
+        )
+
+    elif opcion == "ubicacion":
+
+        await query.message.reply_venue(
             latitude=-17.9703,
             longitude=-67.1118,
             title="TechStore Bolivia",
             address="Oruro, Bolivia"
         )
 
-    # ==========================
-    # CONTACTO
-    # ==========================
-    elif texto == "☎️ Contacto":
+    elif opcion == "contacto":
 
-        await update.message.reply_text(
+        await query.message.reply_text(
             """
 ☎️ CONTACTO
 
-📱 WhatsApp:
+📱 WhatsApp
 https://wa.me/59172456013
 
-📧 Correo:
-ventas@techstore.com
-
-🌐 Web:
-www.techstore.com
+📧 ventas@techstore.com
 """
-        )
-
-    # ==========================
-    # HORARIOS
-    # ==========================
-    elif texto == "🕒 Horarios":
-
-        await update.message.reply_text(
-            """
-🕒 HORARIOS
-
-Lunes a Viernes
-08:00 - 18:00
-
-Sábado
-09:00 - 13:00
-
-Domingo
-Cerrado
-"""
-        )
-
-    else:
-
-        await update.message.reply_text(
-            "Seleccione una opción válida del menú."
         )
 
 # =====================================
@@ -383,18 +221,23 @@ def main():
 
     app = ApplicationBuilder().token(TOKEN).build()
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("catalogo", catalogo))
-
     app.add_handler(
-        MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            mensajes
-        )
+        CommandHandler("start", start)
     )
 
-    print("🤖 TechStore Bolivia iniciado correctamente")
+    app.add_handler(
+        CommandHandler("help", help_command)
+    )
+
+    app.add_handler(
+        CommandHandler("catalogo", catalogo)
+    )
+
+    app.add_handler(
+        CallbackQueryHandler(botones)
+    )
+
+    print("✅ TechStore iniciado")
 
     app.run_polling()
 
