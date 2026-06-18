@@ -6,7 +6,7 @@ app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 TOKEN = "8855798797:AAGCYmIcdYH_8JN75o_fShlU23E5cyydo50"
-# Pon aquí tu ID numérico que obtuviste en getUpdates
+# EJEMPLO: MI_CHAT_ID = "123456789"
 MI_CHAT_ID = "7233717619" 
 
 @app.route("/")
@@ -15,10 +15,12 @@ def inicio():
 
 @socketio.on("message")
 def manejar_mensaje(mensaje):
+    # Esto muestra el mensaje en tu chat web
     socketio.send(mensaje, broadcast=True)
-    # Envía el comando a tu Telegram personal para que el Bot lo procese
+    
+    # Esto envía el mensaje a tu Telegram
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    requests.post(url, json={"chat_id": MI_CHAT_ID, "text": mensaje.split(":")[-1].strip()})
+    requests.post(url, json={"chat_id": MI_CHAT_ID, "text": mensaje})
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000)
