@@ -1,139 +1,80 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat en Línea UDABOL</title>
+<meta charset="UTF-8">
+<title>Chat IA TechStore</title>
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
-    <!-- Socket.IO -->
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.container{
+width:80%;
+background:#1e293b;
+padding:20px;
+border-radius:10px;
+}
+
+#chat{
+height:400px;
+overflow:auto;
+background:#0b1220;
+padding:10px;
+border-radius:10px;
+margin-bottom:10px;
+}
+
+input,button{
+padding:10px;
+margin-top:10px;
+}
+
+button{
+background:#22c55e;
+border:none;
+color:white;
+cursor:pointer;
+}
+</style>
 </head>
 
 <body>
 
-    <div class="contenedor">
+<div class="container">
 
-        <!-- ENCABEZADO -->
-        <h1>💬 CHAT EN LÍNEA <span class="resaltado">UDABOL</span></h1>
+<h2>🤖 Chat IA + Telegram + Web</h2>
 
-        <div class="subtitulo">
-            Universidad de Aquino Bolivia - Comunicación en Tiempo Real
-        </div>
+<div id="chat"></div>
 
-        <!-- NOMBRE DEL USUARIO -->
-        <div class="usuario" id="seccion-usuario">
-            <input type="text" id="nombre" placeholder="Ingrese su nombre completo..." autocomplete="off">
-            <button onclick="guardarNombre()">Ingresar al Chat</button>
-        </div>
+<input id="msg" placeholder="Escribe...">
+<button onclick="enviar()">Enviar</button>
 
-        <!-- CHAT -->
-        <div id="chat"></div>
+</div>
 
-        <!-- MENSAJES -->
-        <div class="mensaje">
-            <input type="text" id="mensaje" placeholder="Escriba su mensaje aquí..." disabled autocomplete="off">
-            <button id="btn-enviar" onclick="enviarMensaje()" disabled>
-                Enviar Mensaje
-            </button>
-        </div>
+<script>
+const socket = io();
 
-    </div>
+function enviar(){
+let msg = document.getElementById("msg").value;
+socket.send(msg);
+document.getElementById("msg").value="";
+}
 
-    <script>
-        const socket = io();
-        let nombreUsuario = "";
-
-        // GUARDAR NOMBRE
-        function guardarNombre() {
-            const nombreInput = document.getElementById("nombre");
-            const nombre = nombreInput.value.trim();
-
-            if (nombre === "") {
-                alert("Debe ingresar un nombre válido.");
-                return;
-            }
-
-            nombreUsuario = nombre;
-
-            // Ocultar la sección del nombre y habilitar la de mensajes
-            document.getElementById("seccion-usuario").style.display = "none";
-            document.getElementById("mensaje").disabled = false;
-            document.getElementById("btn-enviar").disabled = false;
-            document.getElementById("mensaje").focus();
-
-            agregarMensajeSistema(`👋 ${nombreUsuario} se ha unido al chat.`);
-        }
-
-        // ENVIAR MENSAJE
-        function enviarMensaje() {
-            const mensajeInput = document.getElementById("mensaje");
-            const texto = mensajeInput.value.trim();
-
-            if (nombreUsuario === "") {
-                alert("Primero debe ingresar su nombre.");
-                return;
-            }
-
-            if (texto === "") return;
-
-            // Enviar mensaje al servidor a través de WebSockets
-            socket.send(nombreUsuario + ": " + texto);
-            mensajeInput.value = "";
-            mensajeInput.focus();
-        }
-
-        // RECIBIR MENSAJES
-        socket.on("message", function(msg) {
-            const chat = document.getElementById("chat");
-            const parrafo = document.createElement("p");
-            
-            // Formatear para que el nombre del autor se vea en negrita
-            const separador = msg.indexOf(":");
-            if (separador !== -1) {
-                const autor = msg.substring(0, separador);
-                const contenido = msg.substring(separador + 1);
-                parrafo.innerHTML = `<strong>${autor}:</strong>${contenido}`;
-            } else {
-                parrafo.textContent = msg;
-            }
-
-            chat.appendChild(parrafo);
-            chat.scrollTop = chat.scrollHeight; // Hacer scroll automáticamente hacia el último mensaje
-        });
-
-        // MENSAJE DE SISTEMA (Visualmente distinto)
-        function agregarMensajeSistema(texto) {
-            const chat = document.getElementById("chat");
-            const parrafo = document.createElement("p");
-            
-            // Estilos en línea para diferenciar los mensajes del sistema de los mensajes de usuarios
-            parrafo.style.background = "#e2e8f0";
-            parrafo.style.border = "none";
-            parrafo.style.alignSelf = "center";
-            parrafo.style.fontSize = "13px";
-            parrafo.style.color = "#475569";
-            parrafo.innerHTML = `<em>${texto}</em>`;
-            
-            chat.appendChild(parrafo);
-        }
-
-        // PERMITIR ENVÍO DE FORMULARIOS CON LA TECLA "ENTER"
-        document.addEventListener("DOMContentLoaded", function() {
-            // Enter para enviar mensaje
-            document.getElementById("mensaje").addEventListener("keypress", function(e) {
-                if (e.key === "Enter") enviarMensaje();
-            });
-
-            // Enter para guardar nombre
-            document.getElementById("nombre").addEventListener("keypress", function(e) {
-                if (e.key === "Enter") guardarNombre();
-            });
-        });
-    </script>
+socket.on("message", function(msg){
+let div = document.createElement("div");
+div.innerHTML = msg;
+document.getElementById("chat").appendChild(div);
+});
+</script>
 
 </body>
 </html>
