@@ -1,80 +1,35 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Chat IA TechStore</title>
-
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-
-<style>
-body{
-font-family:Arial;
-background:#0f172a;
-color:white;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-}
-
-.container{
-width:80%;
-background:#1e293b;
-padding:20px;
-border-radius:10px;
-}
-
-#chat{
-height:400px;
-overflow:auto;
-background:#0b1220;
-padding:10px;
-border-radius:10px;
-margin-bottom:10px;
-}
-
-input,button{
-padding:10px;
-margin-top:10px;
-}
-
-button{
-background:#22c55e;
-border:none;
-color:white;
-cursor:pointer;
-}
-</style>
+    <meta charset="UTF-8">
+    <title>Chat UDABOL IA</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        #chat { height: 300px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; }
+    </style>
 </head>
-
 <body>
+    <h1>Asistente UDABOL</h1>
+    <div id="chat"></div>
+    <input type="text" id="msg" placeholder="Escribe tu mensaje...">
+    <button onclick="enviar()">Enviar</button>
 
-<div class="container">
+    <script>
+        const socket = io();
 
-<h2>🤖 Chat IA + Telegram + Web</h2>
+        // Escuchar mensajes que vienen del servidor (Flask)
+        socket.on('message', function(data) {
+            const chat = document.getElementById('chat');
+            chat.innerHTML += `<p>${data}</p>`;
+            chat.scrollTop = chat.scrollHeight; // Auto-scroll al final
+        });
 
-<div id="chat"></div>
-
-<input id="msg" placeholder="Escribe...">
-<button onclick="enviar()">Enviar</button>
-
-</div>
-
-<script>
-const socket = io();
-
-function enviar(){
-let msg = document.getElementById("msg").value;
-socket.send(msg);
-document.getElementById("msg").value="";
-}
-
-socket.on("message", function(msg){
-let div = document.createElement("div");
-div.innerHTML = msg;
-document.getElementById("chat").appendChild(div);
-});
-</script>
-
+        // Enviar mensaje al servidor
+        function enviar() {
+            const input = document.getElementById('msg');
+            socket.send(input.value);
+            input.value = '';
+        }
+    </script>
 </body>
 </html>
