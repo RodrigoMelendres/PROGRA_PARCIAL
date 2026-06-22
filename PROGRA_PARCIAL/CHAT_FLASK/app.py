@@ -1,6 +1,7 @@
 import os
 import threading
 import asyncio
+import time
 from flask import Flask, render_template
 from flask_socketio import SocketIO, send
 from dotenv import load_dotenv
@@ -8,28 +9,32 @@ from telegram import Bot
 from telegram.ext import ApplicationBuilder, MessageHandler, filters
 from google import genai
 
-# 1. Cargar variables
+# Cargar variables
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 API_KEY = os.getenv("GEMINI_API_KEY")
 
-# 2. Inicialización
+# Inicialización
 client = genai.Client(api_key=API_KEY)
 bot_instance = Bot(token=TOKEN)
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode=None)
 
 def consultar_gemini(texto):
+    # Usamos un modelo más ligero (Lite) para mayor velocidad y menor saturación
+    modelo_rapido = "models/gemini-2.0-flash-lite"
+    
     try:
-        # Usamos el nombre exacto de tu lista de modelos disponibles
+        # Petición con timeout implícito más rápido
         response = client.models.generate_content(
-            model="models/gemini-3.5-flash",
-            contents=f"Eres un asistente de la UDABOL. Responde de forma amable: {texto}",
+            model=modelo_rapido,
+            contents=f"Eres un asistente de la UDABOL. Responde de forma directa, amable y muy breve: {texto}",
         )
         return response.text
     except Exception as e:
-        return f"⚠️ Error IA: {str(e)}"
+        # Fallback inmediato si el modelo Lite también falla
+        return "⚠️ El servidor está muy ocupado, intenta de nuevo en un momento."
 
 # --- BOT TELEGRAM ---
 async def responder_telegram(update, context):
@@ -42,7 +47,7 @@ async def responder_telegram(update, context):
 def run_bot():
     app_bot = ApplicationBuilder().token(TOKEN).build()
     app_bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, responder_telegram))
-    print("🤖 Bot Telegram listo y escuchando...")
+    print("🤖 Bot Telegram optimizado iniciado...")
     app_bot.run_polling()
 
 # --- WEB SOCKET ---
@@ -62,6 +67,5 @@ def index():
     return render_template("index.html")
 
 if __name__ == "__main__":
-    # Iniciar bot y servidor en paralelo
     threading.Thread(target=run_bot, daemon=True).start()
     socketio.run(app, host="127.0.0.1", port=5000, debug=False)
